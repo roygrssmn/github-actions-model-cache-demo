@@ -15,7 +15,7 @@ A small demo of caching Hugging Face model files across GitHub Actions runs. It 
 ## What is cached?
 
 - `HF_HOME` is set to `${{ github.workspace }}/.cache/huggingface`.
-- `actions/cache@v4` caches `.cache/huggingface/hub`, which is where Transformers and `huggingface_hub` keep downloaded model artifacts.
+- `actions/cache@v6` caches `.cache/huggingface/hub`, which is where Transformers and `huggingface_hub` keep downloaded model artifacts.
 - The key `hf-tiny-gpt2-v1-${{ runner.os }}` deliberately stays stable across workflow runs.
 - `actions/setup-python` separately caches pip downloads; that cache is not the model cache.
 
