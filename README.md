@@ -20,6 +20,8 @@ Two CPU demos show how to cache Hugging Face model files across GitHub Actions r
 
 The workflow also runs on pushes that change its YAML or inference script. Its model cache key includes the pinned Hugging Face revision and runner OS. The CPU inference wheel is cached separately through pip.
 
+On `main`, the cold job took 4 min 43 s and the two hot jobs took 35 s and 23 s. Restoring the model saved 5–10 s compared with downloading it. Reusing the compiled CPU inference wheel through the separate pip cache accounted for most of the job speedup. See [the step timings](cache-test.md#qwen-job-timing-by-step).
+
 ## What does the Tiny GPT-2 workflow cache?
 
 - `HF_HOME` is set to `${{ github.workspace }}/.cache/huggingface`.
