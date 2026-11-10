@@ -1,15 +1,8 @@
 # GitHub Actions model cache test
 
-Tested on 10 November 2026 on GitHub-hosted Linux runners with the `sshleifer/tiny-gpt2` model. The workflow caches `.cache/huggingface/hub` under `hf-tiny-gpt2-v1-Linux`. GitHub listed the cache at 1.27 MiB.
+## Tiny GPT-2 baseline
 
-| Run | Job time | Result |
-| --- | ---: | --- |
-| [Cold run on main](https://github.com/roygrssmn/github-actions-model-cache-demo/actions/runs/42862743152/job/129992916704) | 43 s | The model cache missed. The runner downloaded the model, generated tokens, and saved the cache after the test passed. |
-| [First hot run on main](https://github.com/roygrssmn/github-actions-model-cache-demo/actions/runs/42862944111/job/129993634479) | 47 s | A fresh runner restored the same key, ran with `HF_HUB_OFFLINE=1`, and generated tokens. |
-| [Hot rerun on main](https://github.com/roygrssmn/github-actions-model-cache-demo/actions/runs/42863525738/job/129995673093) | 42 s | A fresh runner logged `CACHE HIT` and `HF_HUB_OFFLINE=1` and generated eight tokens from the restored files. |
-| [Hot run with upgraded actions](https://github.com/roygrssmn/github-actions-model-cache-demo/actions/runs/42863592302/job/129995909995) | 47 s | The upgrade branch restored the same cache key and generated tokens with `HF_HUB_OFFLINE=1`. |
-
-The hot runs confirm that the restored model files were sufficient for inference without contacting the Hugging Face Hub. The workflow installs Python dependencies separately and uses a separate pip cache. The measured Tiny GPT-2 job times were similar across cache states.
+The cold run saved a 1.27 MiB model cache in 43 s. Cache hits took 42–47 s and generated tokens with `HF_HUB_OFFLINE=1`. The observed job times were similar across cache states. [Cold run](https://github.com/roygrssmn/github-actions-model-cache-demo/actions/runs/42862743152/job/129992916704) · [Hot run](https://github.com/roygrssmn/github-actions-model-cache-demo/actions/runs/42863525738/job/129995673093)
 
 ## Qwen2.5-1.5B-Instruct Q4_K_M baseline with the Python runtime
 
