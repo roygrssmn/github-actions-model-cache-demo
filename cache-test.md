@@ -44,4 +44,7 @@ Job times exclude queue time. Step durations use GitHub's whole-second timestamp
 | Post Check out repository | 0 s | 0 s | 1 s |
 | Complete job | 0 s | 0 s | 0 s |
 
-The hot jobs took **88–92% less time** than the cold job. Restoring the model took 7–12 s versus 17 s to download it, saving about 5–10 s on model retrieval in these runs. Most of the overall improvement came from the separate pip cache. Reusing the built inference wheel cut the runtime install step from 4 min 7 s to 3 s.
+The hot jobs took **88–92% less time** than the cold job. The step timings show how each cache contributed.
+
+- **Model cache.** GitHub restored the Qwen GGUF weights in 7–12 s and skipped the 17 s download, saving 5–10 s on model retrieval. Saving the cache added 7 s to the cold job.
+- **Pip cache.** The **Install CPU inference runtime** step installs `llama-cpp-python`, which loads the GGUF file and generates tokens on the CPU. The cold run compiled its C++ code into a Python wheel and installed it in 4 min 7 s. The hot runs installed the same wheel from the pip cache in 3 s each, saving 4 min 4 s on that step. This accounted for most of the overall speedup.
