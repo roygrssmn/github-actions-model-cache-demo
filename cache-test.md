@@ -55,6 +55,17 @@ In the [prebuilt runtime branch run](https://github.com/roygrssmn/github-actions
 
 The previous hot jobs on `main` took **23 s and 35 s** with the compiled wheel already in the pip cache. The prebuilt workflow removes the cold runtime build, which previously took **4 min 7 s**. The branch run measured a model cache hit.
 
+### Same commit with and without the model cache
+
+Both manual runs used commit `87ab6db`, the same Qwen model and pinned runtime, and the same prompt. Each verified both checksums and produced the same answer with networking disabled.
+
+| Run | Cache behavior | Model retrieval | Job time | Offline inference |
+| --- | --- | ---: | ---: | --- |
+| [With cache](https://github.com/roygrssmn/github-actions-model-cache-demo/actions/runs/42871089114/job/130022259010) | Restored the existing cache and skipped the model download. | 11 s | 20 s | Pass |
+| [Without cache](https://github.com/roygrssmn/github-actions-model-cache-demo/actions/runs/42871094268/job/130022277850) | Skipped cache restore and save. Downloaded the GGUF from Hugging Face. | 13 s | 20 s | Pass |
+
+Cache restore saved 2 s on model retrieval in this pair. Total job time was the same at GitHub's whole-second precision.
+
 ### Ten randomized trials
 
 The [benchmark run](https://github.com/roygrssmn/github-actions-model-cache-demo/actions/runs/42869313207) shuffled ten capital-city prompts and randomly assigned five to each cache state using fixed seeds. Each trial ran on a separate GitHub-hosted runner with the same model and prebuilt runtime. All checked their expected cache state, verified both checksums, and generated the expected city with networking disabled.

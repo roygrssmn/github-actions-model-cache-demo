@@ -14,13 +14,13 @@ Two CPU demos show how to cache Hugging Face model files across GitHub Actions r
 
 ## Try Qwen on GitHub
 
-1. Open **Actions → Quantized model cache demo → Run workflow** and choose `main`.
-2. In **Restore quantized model cache**, look for a restored `hf-qwen2.5-1.5b-q4_k_m-…-Linux` key. On a hit, **Download model on cache miss** is skipped. On a miss, the job downloads the GGUF file and saves it after the test passes.
+1. Open **Actions → Quantized model cache demo → Run workflow** and choose the branch you want to test.
+2. Run once with **Restore and save the model cache** checked and once with it unchecked. With caching enabled, a hit restores the model and skips the download. A miss downloads the model and saves it after a successful test. With caching disabled, the runner downloads the GGUF file and skips both cache restore and save.
 3. Check **Verify model size and checksum** and **Run offline inference from the local GGUF file**. The workflow enforces a 1.5 GB model file limit, checks SHA-256, and runs CPU inference in a Linux network namespace without external connectivity.
 
 The workflow also runs on pushes that change its YAML. The model cache key includes the pinned Hugging Face revision and runner OS.
 
-The Qwen workflow downloads a pinned Ubuntu CPU release of [llama.cpp](https://github.com/ggml-org/llama.cpp/releases), verifies the archive checksum, and uses `llama-completion` to load the local GGUF file. The previous Python runtime built a wheel from source on a cold run, which took 4 min 7 s. The prebuilt runtime replaces that build and its separate pip cache. See [the benchmark](cache-test.md#qwen-with-the-prebuilt-llamacpp-runtime).
+The Qwen workflow downloads a pinned Ubuntu CPU release of [llama.cpp](https://github.com/ggml-org/llama.cpp/releases), verifies the archive checksum, and uses `llama-completion` to load the local GGUF file. The previous Python runtime built a wheel from source on a cold run, which took 4 min 7 s. The prebuilt runtime replaces that build and its separate pip cache. In the [paired comparison](cache-test.md#same-commit-with-and-without-the-model-cache), both jobs took 20 s and passed offline inference. Model retrieval took 11 s with the cache and 13 s without it.
 
 ## What does the Tiny GPT-2 workflow cache?
 
@@ -29,7 +29,7 @@ The Qwen workflow downloads a pinned Ubuntu CPU release of [llama.cpp](https://g
 - The key `hf-tiny-gpt2-v1-${{ runner.os }}` deliberately stays stable across workflow runs.
 - `actions/setup-python` separately caches pip downloads; that cache is not the model cache.
 
-This demo caches *model downloads*, not generated outputs or model state in memory. Github-hosted jobs still recreate the Python environment each run.
+This demo caches *model downloads*, not generated outputs or model state in memory. GitHub-hosted jobs still recreate the Python environment each run.
 
 ## Run locally
 
