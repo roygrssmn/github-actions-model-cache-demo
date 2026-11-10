@@ -26,5 +26,3 @@ In the [paired model-cache comparison](cache-test.md#same-commit-with-and-withou
 
 - GitHub Actions caches are subject to quotas, eviction, branch access rules, and retention policies.
 - For large LLMs, use persistent storage or a self-hosted runner rather than relying on Actions cache.
-
-See also the [standalone Tiny GPT-2 cache demo](tiny-gpt2.md).
