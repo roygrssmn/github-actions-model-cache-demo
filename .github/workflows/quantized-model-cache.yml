@@ -2,10 +2,14 @@ name: Quantized model cache demo
 
 on:
   workflow_dispatch:
+    inputs:
+      use_model_cache:
+        description: Restore and save the model cache
+        type: boolean
+        default: true
   push:
     paths:
       - '.github/workflows/quantized-model-cache.yml'
-      - 'test_quantized_model.py'
 
 permissions:
   contents: read
@@ -19,19 +23,15 @@ jobs:
       MODEL_REVISION: 91cad51170dc346986eccefdc2dd33a9da36ead9
       MODEL_SHA256: 6a1a2eb6d15622bf3c96857206351ba97e1af16c30d7a74ee38970e434e9407e
       MAX_MODEL_BYTES: '1500000000'
+      LLAMA_CPP_RELEASE: b12250
+      LLAMA_CPP_SHA256: 5a2cb0188a3f392f88c5d226768abd0da7b2b6a5abdbb50abedcd7c8f42d9fb1
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
 
-      - name: Set up Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: '3.11'
-          cache: pip
-          cache-dependency-path: .github/workflows/quantized-model-cache.yml
-
       - name: Restore quantized model cache
+        if: github.event_name != 'workflow_dispatch' || inputs.use_model_cache
         id: model-cache
         uses: actions/cache@v6
         with:
@@ -56,13 +56,25 @@ jobs:
           fi
           printf '%s  %s\n' "$MODEL_SHA256" "$MODEL_PATH" | sha256sum --check
 
-      - name: Install CPU inference runtime
-        env:
-          CMAKE_BUILD_PARALLEL_LEVEL: '2'
-        run: python -m pip install --no-binary=llama-cpp-python llama-cpp-python==0.3.19
+      - name: Download and verify prebuilt CPU inference runtime
+        run: |
+          archive="$RUNNER_TEMP/llama-$LLAMA_CPP_RELEASE.tar.gz"
+          curl --fail --location --retry 3 --output "$archive" \
+            "https://github.com/ggml-org/llama.cpp/releases/download/$LLAMA_CPP_RELEASE/llama-$LLAMA_CPP_RELEASE-bin-ubuntu-x64.tar.gz"
+          printf '%s  %s\n' "$LLAMA_CPP_SHA256" "$archive" | sha256sum --check
+          tar -xzf "$archive" -C "$RUNNER_TEMP"
 
       - name: Run offline inference from the local GGUF file
         run: |
-          sudo --preserve-env=LD_LIBRARY_PATH unshare --net \
+          completion=$(sudo unshare --net \
             --setuid "$(id -u)" --setgid "$(id -g)" -- \
-            "$(command -v python)" test_quantized_model.py "$MODEL_PATH"
+            "$RUNNER_TEMP/llama-$LLAMA_CPP_RELEASE/llama-completion" \
+            --model "$MODEL_PATH" --n-gpu-layers 0 --ctx-size 512 --predict 16 \
+            --temp 0 --no-conversation --no-display-prompt \
+            --prompt "The capital of France is")
+          printf 'Generated text: %s\n' "$completion"
+          if ! grep -iqw 'Paris' <<< "$completion"; then
+            echo "Expected the model to generate Paris" >&2
+            exit 1
+          fi
+          echo "PASS: generated the expected completion from the local GGUF file"
