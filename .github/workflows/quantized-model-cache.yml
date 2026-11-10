@@ -1,0 +1,68 @@
+name: Quantized model cache demo
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/quantized-model-cache.yml'
+      - 'test_quantized_model.py'
+
+permissions:
+  contents: read
+
+jobs:
+  demo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      MODEL_PATH: .cache/qwen/qwen2.5-1.5b-instruct-q4_k_m.gguf
+      MODEL_REVISION: 91cad51170dc346986eccefdc2dd33a9da36ead9
+      MODEL_SHA256: 6a1a2eb6d15622bf3c96857206351ba97e1af16c30d7a74ee38970e434e9407e
+      MAX_MODEL_BYTES: '1500000000'
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: .github/workflows/quantized-model-cache.yml
+
+      - name: Restore quantized model cache
+        id: model-cache
+        uses: actions/cache@v6
+        with:
+          path: ${{ env.MODEL_PATH }}
+          key: hf-qwen2.5-1.5b-q4_k_m-${{ env.MODEL_REVISION }}-${{ runner.os }}
+
+      - name: Download model on cache miss
+        if: steps.model-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p "$(dirname "$MODEL_PATH")"
+          curl --fail --location --retry 3 --max-filesize "$MAX_MODEL_BYTES" \
+            --output "$MODEL_PATH" \
+            "https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF/resolve/$MODEL_REVISION/$(basename "$MODEL_PATH")"
+
+      - name: Verify model size and checksum
+        run: |
+          model_bytes=$(stat -c %s "$MODEL_PATH")
+          echo "Model size: $model_bytes bytes (limit: $MAX_MODEL_BYTES bytes)"
+          if [ "$model_bytes" -gt "$MAX_MODEL_BYTES" ]; then
+            echo "Model exceeds the size limit" >&2
+            exit 1
+          fi
+          printf '%s  %s\n' "$MODEL_SHA256" "$MODEL_PATH" | sha256sum --check
+
+      - name: Install CPU inference runtime
+        env:
+          CMAKE_BUILD_PARALLEL_LEVEL: '2'
+        run: python -m pip install --no-binary=llama-cpp-python llama-cpp-python==0.3.19
+
+      - name: Run offline inference from the local GGUF file
+        run: |
+          sudo --preserve-env=LD_LIBRARY_PATH unshare --net \
+            --setuid "$(id -u)" --setgid "$(id -g)" -- \
+            "$(command -v python)" test_quantized_model.py "$MODEL_PATH"
