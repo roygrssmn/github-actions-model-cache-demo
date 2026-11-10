@@ -28,6 +28,8 @@ jobs:
         uses: actions/setup-python@v7
         with:
           python-version: '3.11'
+          cache: pip
+          cache-dependency-path: .github/workflows/quantized-model-cache.yml
 
       - name: Restore quantized model cache
         id: model-cache
@@ -55,9 +57,12 @@ jobs:
           printf '%s  %s\n' "$MODEL_SHA256" "$MODEL_PATH" | sha256sum --check
 
       - name: Install CPU inference runtime
-        run: |
-          python -m pip install \
-            https://github.com/abetlen/llama-cpp-python/releases/download/v0.3.19/llama_cpp_python-0.3.19-cp311-cp311-linux_x86_64.whl
+        env:
+          CMAKE_BUILD_PARALLEL_LEVEL: '2'
+        run: python -m pip install --no-binary=llama-cpp-python llama-cpp-python==0.3.19
 
-      - name: Run inference from the local GGUF file
-        run: python test_quantized_model.py "$MODEL_PATH"
+      - name: Run offline inference from the local GGUF file
+        run: |
+          sudo --preserve-env=LD_LIBRARY_PATH unshare --net \
+            --setuid "$(id -u)" --setgid "$(id -g)" -- \
+            "$(command -v python)" test_quantized_model.py "$MODEL_PATH"
