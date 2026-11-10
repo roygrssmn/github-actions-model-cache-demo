@@ -55,11 +55,13 @@ The wheel was a `.whl` package containing the Python wrapper and compiled C++ in
 
 The original Python workflow ran on a separate benchmark branch with **the Qwen model cache enabled and the pip wheel cache disabled**. The model cache hit, the model download was skipped, and pip built the runtime from source. For comparison, the earlier runs below used the same Python runtime with the model cache enabled and a cached wheel available.
 
-| Run | Qwen model cache | Python wheel cache | Runtime install | Job time |
-| --- | --- | --- | ---: | ---: |
-| [Wheel cache disabled](https://github.com/roygrssmn/github-actions-model-cache-demo/actions/runs/42904712831/job/130139567011) | Hit | Disabled | 3 min 59 s | 4 min 16 s |
-| [Wheel cache enabled, run 1](https://github.com/roygrssmn/github-actions-model-cache-demo/actions/runs/42866619726/job/130006562394) | Hit | Hit | 3 s | 35 s |
-| [Wheel cache enabled, run 2](https://github.com/roygrssmn/github-actions-model-cache-demo/actions/runs/42866627073/job/130006586627) | Hit | Hit | 3 s | 23 s |
+| Qwen runtime | Model cache | Runtime setup | Total job time |
+| --- | --- | ---: | ---: |
+| [Python with wheel cache](https://github.com/roygrssmn/github-actions-model-cache-demo/actions/runs/42866627073/job/130006586627) | Hit | 3 s | 23 s |
+| [Python without wheel cache](https://github.com/roygrssmn/github-actions-model-cache-demo/actions/runs/42904712831/job/130139567011) | Hit | 3 min 59 s | 4 min 16 s |
+| [Prebuilt llama.cpp](https://github.com/roygrssmn/github-actions-model-cache-demo/actions/runs/42868298866/job/130012439450) | Hit | 1 s | 17 s |
+
+Runtime setup covers installing the Python package or downloading, verifying, and unpacking the prebuilt binary. Total job time excludes queueing. All three runs passed offline inference. A second [Python run with a cached wheel](https://github.com/roygrssmn/github-actions-model-cache-demo/actions/runs/42866619726/job/130006562394) also took 3 s to install the runtime and finished in 35 s.
 
 The wheel-cache-disabled job restored the GGUF in 8 s and generated seven tokens offline. The runtime install was **3 min 56 s shorter** in both jobs that reused the cached wheel. The runtime build accounts for most of the difference between these jobs. The prebuilt runtime removes the source build even when no wheel cache is available.
 

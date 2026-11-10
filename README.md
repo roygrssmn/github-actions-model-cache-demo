@@ -14,7 +14,7 @@ Two CPU demos show how to cache Hugging Face model files across GitHub Actions r
 
 ## Why Qwen uses a prebuilt runtime
 
-The original Python workflow took **4 min 16 s with the Qwen model cache enabled and the pip wheel cache disabled**. It restored the GGUF in 8 s, then spent 3 min 59 s building and installing `llama-cpp-python`. With the model cache also enabled and the compiled wheel available in pip's cache, the original workflow installed the runtime in 3 s. Reusing the wheel saved about 4 minutes on that step. See the [wheel-cache benchmark](cache-test.md#wheel-cache-benchmark-with-the-model-cache-enabled).
+The original Python workflow took **4 min 16 s with the Qwen model cache enabled and the pip wheel cache disabled**. It restored the GGUF in 8 s, then spent 3 min 59 s building and installing `llama-cpp-python`. With the model cache also enabled and the compiled wheel available in pip's cache, the original workflow installed the runtime in 3 s. Reusing the wheel saved about 4 minutes on that step. The prebuilt runtime took 1 s to set up and its job finished in 17 s with a model cache hit. See the [side-by-side runtime benchmark](cache-test.md#wheel-cache-benchmark-with-the-model-cache-enabled).
 
 A Python wheel (`.whl`) is a ready-to-install package. The old `llama-cpp-python` wheel bundled the Python wrapper and the compiled C++ inference library. The GGUF model weights were cached separately. The old install command built from source whenever pip had no compatible cached wheel. Eviction, a Python or runner platform change, or a workflow edit that changed the pip cache key could trigger a build when no usable fallback was available.
 
