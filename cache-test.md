@@ -48,3 +48,9 @@ The hot jobs took **88–92% less time** than the cold job. The step timings sho
 
 - **Model cache.** GitHub restored the Qwen GGUF weights in 7–12 s and skipped the 17 s download, saving 5–10 s on model retrieval. Saving the cache added 7 s to the cold job.
 - **Pip cache.** The **Install CPU inference runtime** step installed `llama-cpp-python`, which loads the GGUF file and generates tokens on the CPU. The cold run compiled its C++ code into a Python wheel and installed it in 4 min 7 s. The hot runs installed the same wheel from the pip cache in 3 s each, saving 4 min 4 s on that step. This accounted for most of the overall speedup.
+
+## Qwen with the prebuilt llama.cpp runtime
+
+In the [prebuilt runtime branch run](https://github.com/roygrssmn/github-actions-model-cache-demo/actions/runs/42868298866/job/130012439450), the job finished in **17 s**. Restoring the existing model cache took **10 s**, and the job skipped the GGUF download. Downloading, verifying, and unpacking the pinned Ubuntu CPU runtime took **1 s**. The CLI generated the expected completion with networking disabled.
+
+The previous hot jobs on `main` took **23 s and 35 s** with the compiled wheel already in the pip cache. The prebuilt workflow removes the cold runtime build, which previously took **4 min 7 s**. The branch run measured a model cache hit. A cold-model end-to-end comparison remains unmeasured.

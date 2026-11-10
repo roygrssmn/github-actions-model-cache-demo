@@ -20,7 +20,7 @@ Two CPU demos show how to cache Hugging Face model files across GitHub Actions r
 
 The workflow also runs on pushes that change its YAML. The model cache key includes the pinned Hugging Face revision and runner OS.
 
-The Qwen workflow downloads a pinned Ubuntu CPU release of [llama.cpp](https://github.com/ggml-org/llama.cpp/releases), verifies the archive checksum, and uses `llama-completion` to load the local GGUF file. The previous Python runtime built a wheel from source on a cold run, which took 4 min 7 s. The prebuilt runtime replaces that build and its separate pip cache. See [the benchmark](cache-test.md#qwen-job-timing-by-step).
+The Qwen workflow downloads a pinned Ubuntu CPU release of [llama.cpp](https://github.com/ggml-org/llama.cpp/releases), verifies the archive checksum, and uses `llama-completion` to load the local GGUF file. The previous Python runtime built a wheel from source on a cold run, which took 4 min 7 s. The prebuilt runtime replaces that build and its separate pip cache. See [the benchmark](cache-test.md#qwen-with-the-prebuilt-llamacpp-runtime).
 
 ## What does the Tiny GPT-2 workflow cache?
 
