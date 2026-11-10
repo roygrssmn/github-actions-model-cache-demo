@@ -51,6 +51,18 @@ The hot jobs took **88–92% less time** than the cold job. The step timings sho
 
 The wheel was a `.whl` package containing the Python wrapper and compiled C++ inference library for Python 3.11 on Linux x86-64. The first run restored a fallback pip cache that lacked this wheel. With `--no-binary=llama-cpp-python`, pip compiled the package from source when no compatible locally cached wheel was available. In that workflow, eviction, a Python or runner platform change, or a workflow edit that changed the pip cache key could trigger another build if no usable wheel remained available. The GGUF cache held the model weights independently, so its hit or miss did not determine whether pip rebuilt the wheel.
 
+## Wheel-cache benchmark with the model cache enabled
+
+The original Python workflow ran on a separate benchmark branch with **the Qwen model cache enabled and the pip wheel cache disabled**. The model cache hit, the model download was skipped, and pip built the runtime from source. For comparison, the earlier runs below used the same Python runtime with the model cache enabled and a cached wheel available.
+
+| Run | Qwen model cache | Python wheel cache | Runtime install | Job time |
+| --- | --- | --- | ---: | ---: |
+| [Wheel cache disabled](https://github.com/roygrssmn/github-actions-model-cache-demo/actions/runs/42904712831/job/130139567011) | Hit | Disabled | 3 min 59 s | 4 min 16 s |
+| [Wheel cache enabled, run 1](https://github.com/roygrssmn/github-actions-model-cache-demo/actions/runs/42866619726/job/130006562394) | Hit | Hit | 3 s | 35 s |
+| [Wheel cache enabled, run 2](https://github.com/roygrssmn/github-actions-model-cache-demo/actions/runs/42866627073/job/130006586627) | Hit | Hit | 3 s | 23 s |
+
+The wheel-cache-disabled job restored the GGUF in 8 s and generated seven tokens offline. The runtime install was **3 min 56 s shorter** in both jobs that reused the cached wheel. The runtime build accounts for most of the difference between these jobs. The prebuilt runtime removes the source build even when no wheel cache is available.
+
 ## Qwen with the prebuilt llama.cpp runtime
 
 In the [prebuilt runtime branch run](https://github.com/roygrssmn/github-actions-model-cache-demo/actions/runs/42868298866/job/130012439450), the job finished in **17 s**. Restoring the existing model cache took **10 s**, and the job skipped the GGUF download. Downloading, verifying, and unpacking the pinned Ubuntu CPU runtime took **1 s**. The CLI generated the expected completion with networking disabled.

@@ -12,6 +12,14 @@ Two CPU demos show how to cache Hugging Face model files across GitHub Actions r
 
 > Important: the cache is only saved after the job finishes successfully. A push-triggered run can also populate the cache before your first manual run. If you want to demonstrate a miss again, change the key in `.github/workflows/model-cache.yml` from `v1` to `v2`, then rerun twice.
 
+## Why Qwen uses a prebuilt runtime
+
+The original Python workflow took **4 min 16 s with the Qwen model cache enabled and the pip wheel cache disabled**. It restored the GGUF in 8 s, then spent 3 min 59 s building and installing `llama-cpp-python`. With the model cache also enabled and the compiled wheel available in pip's cache, the original workflow installed the runtime in 3 s. Reusing the wheel saved about 4 minutes on that step. See the [wheel-cache benchmark](cache-test.md#wheel-cache-benchmark-with-the-model-cache-enabled).
+
+A Python wheel (`.whl`) is a ready-to-install package. The old `llama-cpp-python` wheel bundled the Python wrapper and the compiled C++ inference library. The GGUF model weights were cached separately. The old install command built from source whenever pip had no compatible cached wheel. Eviction, a Python or runner platform change, or a workflow edit that changed the pip cache key could trigger a build when no usable fallback was available.
+
+The Qwen workflow now downloads a pinned Ubuntu CPU release of [llama.cpp](https://github.com/ggml-org/llama.cpp/releases), verifies its checksum, and runs `llama-completion` against the local GGUF. Both model-cache modes use the same prebuilt runtime.
+
 ## Try Qwen on GitHub
 
 1. Open **Actions → Quantized model cache demo → Run workflow** and choose the branch you want to test.
@@ -20,9 +28,7 @@ Two CPU demos show how to cache Hugging Face model files across GitHub Actions r
 
 The workflow also runs on pushes that change its YAML. The model cache key includes the pinned Hugging Face revision and runner OS.
 
-The Qwen workflow downloads a pinned Ubuntu CPU release of [llama.cpp](https://github.com/ggml-org/llama.cpp/releases), verifies the archive checksum, and uses `llama-completion` to load the local GGUF file. The previous Python runtime built a wheel from source on a cold run, which took 4 min 7 s. The prebuilt runtime replaces that build and its separate pip cache. In the [paired comparison](cache-test.md#same-commit-with-and-without-the-model-cache), both jobs took 20 s and passed offline inference. Model retrieval took 11 s with the cache and 13 s without it.
-
-A Python wheel (`.whl`) is a ready-to-install package. The old `llama-cpp-python` wheel bundled the Python wrapper and the compiled C++ inference library. The GGUF model weights were cached separately. The old install command built from source whenever pip had no compatible cached wheel. That could happen after eviction, a Python or runner platform change, or a workflow edit that changed the pip cache key and left no usable fallback. The current workflow uses a prebuilt binary in both model-cache modes.
+In the [paired model-cache comparison](cache-test.md#same-commit-with-and-without-the-model-cache), both jobs took 20 s and passed offline inference. Model retrieval took 11 s with the cache and 13 s without it.
 
 ## What does the Tiny GPT-2 workflow cache?
 
