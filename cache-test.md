@@ -1,8 +1,4 @@
-# GitHub Actions model cache test
-
-## Tiny GPT-2 baseline
-
-The cold job took 43 s and saved a 1.27 MiB model cache. Jobs with cache hits took 42–47 s and generated tokens with `HF_HUB_OFFLINE=1`. The observed job times were similar across cache states. [Cold run](https://github.com/roygrssmn/github-actions-model-cache-demo/actions/runs/42862743152/job/129992916704) · [Hot run](https://github.com/roygrssmn/github-actions-model-cache-demo/actions/runs/42863525738/job/129995673093)
+# Qwen runtime and model-cache benchmarks
 
 ## Qwen2.5-1.5B-Instruct Q4_K_M baseline with the Python runtime
 

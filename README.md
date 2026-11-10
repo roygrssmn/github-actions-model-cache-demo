@@ -1,6 +1,6 @@
 # GitHub Actions AI Model Cache Demo
 
-Two CPU demos show how to cache Hugging Face model files across GitHub Actions runs. Use [`sshleifer/tiny-gpt2`](https://huggingface.co/sshleifer/tiny-gpt2) for a quick check or [Qwen2.5-1.5B-Instruct Q4_K_M](https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF) to test a 4-bit model under 1.5 GB. See [cache-test.md](cache-test.md) for measured sizes and run logs.
+Two CPU demos show how to cache Hugging Face model files across GitHub Actions runs. Use [`sshleifer/tiny-gpt2`](https://huggingface.co/sshleifer/tiny-gpt2) for a quick check or [Qwen2.5-1.5B-Instruct Q4_K_M](https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF) to test a 4-bit model under 1.5 GB. See [cache-test.md](cache-test.md) for the Qwen runtime benchmarks and run logs.
 
 ## Try Tiny GPT-2 on GitHub
 
@@ -51,6 +51,8 @@ python test_model.py
 ## Why Tiny GPT-2?
 
 `sshleifer/tiny-gpt2` is a small public test model. It runs on a normal CPU runner; output quality is intentionally poor. No tokens or GPU are needed.
+
+The cold job took 43 s and saved a 1.27 MiB model cache. Jobs with cache hits took 42–47 s and generated tokens with `HF_HUB_OFFLINE=1`. The observed job times were similar across cache states. [Cold run](https://github.com/roygrssmn/github-actions-model-cache-demo/actions/runs/42862743152/job/129992916704) · [Hot run](https://github.com/roygrssmn/github-actions-model-cache-demo/actions/runs/42863525738/job/129995673093)
 
 ## Limitations
 
