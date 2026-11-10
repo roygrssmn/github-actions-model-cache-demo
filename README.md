@@ -1,8 +1,8 @@
 # GitHub Actions AI Model Cache Demo
 
-A small demo of caching Hugging Face model files across GitHub Actions runs. It loads [`sshleifer/tiny-gpt2`](https://huggingface.co/sshleifer/tiny-gpt2) on CPU and generates a few tokens.
+Two CPU demos show how to cache Hugging Face model files across GitHub Actions runs. Use [`sshleifer/tiny-gpt2`](https://huggingface.co/sshleifer/tiny-gpt2) for a quick check or [Qwen2.5-1.5B-Instruct Q4_K_M](https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct-GGUF) to test a 4-bit model under 1.5 GB. See [cache-test.md](cache-test.md) for measured sizes and run logs.
 
-## Try it on GitHub
+## Try Tiny GPT-2 on GitHub
 
 1. Create a GitHub repository named `github-actions-model-cache-demo` (without auto-generating a README).
 2. Upload the files in this project, preserving `.github/workflows/model-cache.yml` (or push them using Git).
@@ -12,7 +12,20 @@ A small demo of caching Hugging Face model files across GitHub Actions runs. It 
 
 > Important: the cache is only saved after the job finishes successfully. A push-triggered run can also populate the cache before your first manual run. If you want to demonstrate a miss again, change the key in `.github/workflows/model-cache.yml` from `v1` to `v2`, then rerun twice.
 
-## What is cached?
+## Try Qwen on GitHub
+
+1. Open **Actions → Quantized model cache demo → Run workflow** and choose `main`.
+2. In **Restore quantized model cache**, look for a restored `hf-qwen2.5-1.5b-q4_k_m-…-Linux` key. On a hit, **Download model on cache miss** is skipped. On a miss, the job downloads the GGUF file and saves it after the test passes.
+3. Check **Verify model size and checksum** and **Run offline inference from the local GGUF file**. The workflow enforces a 1.5 GB model file limit, checks SHA-256, and runs CPU inference in a Linux network namespace without external connectivity.
+
+The workflow also runs on pushes that change its YAML or inference script. On `main`, the cold job took 4 min 43 s and the two hot jobs took 35 s and 23 s. The workflow uses two caches.
+
+- **Model cache.** Stores the Qwen GGUF weights under a key that includes the pinned Hugging Face revision and runner OS. Restoring the file took 7–12 s, saving 5–10 s compared with the 17 s download.
+- **Pip cache.** Stores the compiled Python wheel for `llama-cpp-python`, which loads the GGUF file and generates tokens on the CPU. The **Install CPU inference runtime** step built the wheel from source in the cold run and reused it in the hot runs. That step fell from 4 min 7 s to 3 s, accounting for most of the overall speedup.
+
+See [the step timings](cache-test.md#qwen-job-timing-by-step).
+
+## What does the Tiny GPT-2 workflow cache?
 
 - `HF_HOME` is set to `${{ github.workspace }}/.cache/huggingface`.
 - `actions/cache@v6` caches `.cache/huggingface/hub`, which is where Transformers and `huggingface_hub` keep downloaded model artifacts.
@@ -30,13 +43,13 @@ python -m pip install -r requirements.txt
 python test_model.py
 ```
 
-## Why this model?
+## Why Tiny GPT-2?
 
 `sshleifer/tiny-gpt2` is a small public test model. It runs on a normal CPU runner; output quality is intentionally poor. No tokens or GPU are needed.
 
 ## Limitations
 
 - GitHub Actions cache is best-effort, subject to quotas, eviction, visibility rules, and retention policies; it is not long-term model storage.
-- Cache keys should include a model revision or version if you need controlled reproducibility. This demo keeps a single explicit version for clarity.
+- The Tiny GPT-2 cache uses an explicit version in its key. The Qwen cache uses the pinned model revision.
 - Pip and PyTorch installation can take longer than model download for such a tiny example.
 - For large LLMs, use persistent storage or a self-hosted runner rather than relying on Actions cache.
