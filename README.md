@@ -18,12 +18,9 @@ Two CPU demos show how to cache Hugging Face model files across GitHub Actions r
 2. In **Restore quantized model cache**, look for a restored `hf-qwen2.5-1.5b-q4_k_m-…-Linux` key. On a hit, **Download model on cache miss** is skipped. On a miss, the job downloads the GGUF file and saves it after the test passes.
 3. Check **Verify model size and checksum** and **Run offline inference from the local GGUF file**. The workflow enforces a 1.5 GB model file limit, checks SHA-256, and runs CPU inference in a Linux network namespace without external connectivity.
 
-The workflow also runs on pushes that change its YAML or inference script. On `main`, the cold job took 4 min 43 s and the two hot jobs took 35 s and 23 s. The workflow uses two caches.
+The workflow also runs on pushes that change its YAML. The model cache key includes the pinned Hugging Face revision and runner OS.
 
-- **Model cache.** Stores the Qwen GGUF weights under a key that includes the pinned Hugging Face revision and runner OS. Restoring the file took 7–12 s, saving 5–10 s compared with the 17 s download.
-- **Pip cache.** Stores the compiled Python wheel for `llama-cpp-python`, which loads the GGUF file and generates tokens on the CPU. The **Install CPU inference runtime** step built the wheel from source in the cold run and reused it in the hot runs. That step fell from 4 min 7 s to 3 s, accounting for most of the overall speedup.
-
-See [the step timings](cache-test.md#qwen-job-timing-by-step).
+The Qwen workflow downloads a pinned Ubuntu CPU release of [llama.cpp](https://github.com/ggml-org/llama.cpp/releases), verifies the archive checksum, and uses `llama-completion` to load the local GGUF file. The previous Python runtime built a wheel from source on a cold run, which took 4 min 7 s. The prebuilt runtime replaces that build and its separate pip cache. See [the benchmark](cache-test.md#qwen-job-timing-by-step).
 
 ## What does the Tiny GPT-2 workflow cache?
 

@@ -11,7 +11,7 @@ Tested on 10 November 2026 on GitHub-hosted Linux runners with the `sshleifer/ti
 
 The hot runs confirm that the restored model files were sufficient for inference without contacting the Hugging Face Hub. The workflow installs Python dependencies separately and uses a separate pip cache. The measured Tiny GPT-2 job times were similar across cache states.
 
-## Qwen2.5-1.5B-Instruct Q4_K_M on main
+## Qwen2.5-1.5B-Instruct Q4_K_M baseline with the Python runtime
 
 Tested on 10 November 2026 on GitHub-hosted Linux runners. The 4-bit GGUF file was **1,117,320,736 bytes (1.117 GB)**. GitHub reported a compressed model cache of **1,092,088,856 bytes (1.092 GB)** on `main`. Both sizes are below 1.5 GB.
 
@@ -47,4 +47,4 @@ Job times exclude queue time. Step durations use GitHub's whole-second timestamp
 The hot jobs took **88–92% less time** than the cold job. The step timings show how each cache contributed.
 
 - **Model cache.** GitHub restored the Qwen GGUF weights in 7–12 s and skipped the 17 s download, saving 5–10 s on model retrieval. Saving the cache added 7 s to the cold job.
-- **Pip cache.** The **Install CPU inference runtime** step installs `llama-cpp-python`, which loads the GGUF file and generates tokens on the CPU. The cold run compiled its C++ code into a Python wheel and installed it in 4 min 7 s. The hot runs installed the same wheel from the pip cache in 3 s each, saving 4 min 4 s on that step. This accounted for most of the overall speedup.
+- **Pip cache.** The **Install CPU inference runtime** step installed `llama-cpp-python`, which loads the GGUF file and generates tokens on the CPU. The cold run compiled its C++ code into a Python wheel and installed it in 4 min 7 s. The hot runs installed the same wheel from the pip cache in 3 s each, saving 4 min 4 s on that step. This accounted for most of the overall speedup.
